@@ -1,0 +1,34 @@
+==================================================
+VIRTUALBOX VM CONFIGURATION (MIKROTIK CHR)
+==================================================
+
+[ SYSTEM ]
+- VM Name           : mikrotik
+- OS Type           : Other Linux (64-bit)
+- Base Memory (RAM) : 256 MB
+- Processors        : 1 CPU
+- Execution Cap     : 100%
+
+[ STORAGE ]
+- Controller        : IDE / SATA
+- Disk Image        : mikrotik-6.49.19.vdi (CHR Image)
+
+[ NETWORK ADAPTERS ]
+* Adapter 1 (Upstream/Internet):
+  - Attached to     : Bridged Adapter
+  - Name            : Samsung Mobile USB Remote NDIS Network Device
+  - Role            : NAT / Internet Source via USB Tethering.
+  - Interface       : ether1 (MikroTik)
+
+* Adapter 2 (Downstream/Target):
+  - Attached to     : Bridged Adapter
+  - Name            : Realtek PCIe GbE Family Controller
+  - Role            : Gateway for Clients (via ONT Huawei).
+  - Interface       : ether2 (MikroTik)
+
+[ NETWORK SERVICES ]
+- IP Address ether1 : DHCP Client (Get IP from Samsung Device)
+- IP Address ether2 : 22.22.22.1/24 (Hotspot Gateway)
+- DHCP Server       : Active on ether2 (Pool: 22.22.22.2 - 22.22.22.254)
+- NAT Rule          : chain=srcnat action=masquerade out-interface=ether1
+==================================================
